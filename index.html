@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生け花 スタイルクイズ</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: 'Hiragino Kana', 'Noto Sans JP', sans-serif; }
+  .tab-btn { padding:8px 14px; border-radius:9999px; font-weight:600; font-size:0.8rem; transition:all 0.2s; }
+  .tab-btn.active { background:#166534; color:white; }
+  .tab-btn:not(.active) { background:#e5e7eb; color:#374151; }
+  button:focus { outline:3px solid #166534; outline-offset:2px; }
+  .opt-btn { transition:all 0.15s; }
+  .opt-btn:focus { outline:3px solid #166534; outline-offset:2px; }
+  .school-badge { display:inline-block; padding:2px 8px; border-radius:9999px; font-size:0.7rem; font-weight:700; }
+  .school-ikenobo { background:#fef3c7; color:#92400e; }
+  .school-sogetsu { background:#e0e7ff; color:#3730a3; }
+  .school-ohara { background:#dcfce7; color:#166534; }
+</style>
+</head>
+<body class="bg-green-50 min-h-screen">
+
+<header class="bg-green-800 text-white py-4 px-4 shadow-lg">
+  <div class="max-w-2xl mx-auto flex items-center gap-3">
+    <span class="text-3xl" aria-hidden="true">🌸</span>
+    <div>
+      <h1 class="text-xl font-bold">生け花 スタイルクイズ</h1>
+      <p class="text-green-200 text-sm">池坊・草月流・小原流を学ぼう</p>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-2xl mx-auto p-4">
+
+  <!-- Tabs -->
+  <div class="flex gap-2 mt-4 mb-4 flex-wrap" role="tablist">
+    <button class="tab-btn active" id="tab-quiz" role="tab">クイズ</button>
+    <button class="tab-btn" id="tab-glossary" role="tab">用語集</button>
+    <button class="tab-btn" id="tab-calculator" role="tab">役枝計算機</button>
+    <button class="tab-btn" id="tab-compare" role="tab">流派比較</button>
+  </div>
+
+  <!-- Quiz Panel -->
+  <div id="panel-quiz">
+    <div id="quiz-home">
+      <div class="bg-white rounded-2xl shadow p-5 mb-4">
+        <h2 class="font-bold text-gray-800 mb-3">クイズモードを選択</h2>
+        <div class="space-y-2">
+          <button class="quiz-mode-btn w-full text-left bg-green-50 hover:bg-green-100 border border-green-200 rounded-xl py-3 px-4 font-semibold text-sm" data-mode="style">スタイル識別 — 説明文から流派・様式を当てる</button>
+          <button class="quiz-mode-btn w-full text-left bg-green-50 hover:bg-green-100 border border-green-200 rounded-xl py-3 px-4 font-semibold text-sm" data-mode="yakueda">役枝問題 — 役枝の役割を答える</button>
+          <button class="quiz-mode-btn w-full text-left bg-green-50 hover:bg-green-100 border border-green-200 rounded-xl py-3 px-4 font-semibold text-sm" data-mode="ratio">比率問題 — 花器の種類と長さ比率</button>
+          <button class="quiz-mode-btn w-full text-left bg-green-50 hover:bg-green-100 border border-green-200 rounded-xl py-3 px-4 font-semibold text-sm" data-mode="vessel">花器問題 — スタイルと花器の対応</button>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow p-4 flex justify-between items-center">
+        <div>
+          <div class="text-xs text-gray-500">累計正解数</div>
+          <div id="total-correct-display" class="text-2xl font-bold text-green-700">0</div>
+        </div>
+        <button id="btn-reset-ikebana" class="text-xs text-gray-400 hover:text-red-600 underline">リセット</button>
+      </div>
+    </div>
+
+    <div id="quiz-active" class="hidden">
+      <div class="flex items-center justify-between mb-3 mt-1">
+        <button id="btn-quit-quiz" class="text-sm text-green-700 hover:underline font-bold">← 戻る</button>
+        <div class="text-sm text-gray-500">問 <span id="q-num">1</span>/8 &nbsp; <span id="score-display" class="text-green-700 font-bold">0点</span></div>
+      </div>
+      <div class="bg-gray-200 rounded-full h-2 mb-4">
+        <div id="q-progress" class="bg-green-600 h-2 rounded-full transition-all" style="width:0%"></div>
+      </div>
+      <div class="bg-white rounded-2xl shadow p-5">
+        <div id="q-label" class="text-xs font-semibold text-green-600 uppercase tracking-wide mb-2"></div>
+        <div id="q-text" class="text-base font-bold text-gray-900 mb-5 leading-relaxed whitespace-pre-line"></div>
+        <div id="q-options" class="space-y-2"></div>
+      </div>
+      <div id="q-explanation" class="hidden bg-green-50 border border-green-200 rounded-xl p-4 mt-3">
+        <div id="exp-result" class="font-bold text-sm mb-1"></div>
+        <p id="exp-text" class="text-sm text-gray-700"></p>
+        <button id="btn-next-q" class="mt-3 bg-green-700 hover:bg-green-800 text-white py-2 px-5 rounded-lg font-bold text-sm">次へ →</button>
+      </div>
+    </div>
+
+    <div id="quiz-result" class="hidden">
+      <div class="bg-white rounded-2xl shadow p-6 mt-2 text-center">
+        <div id="res-emoji" class="text-5xl mb-2">🌸</div>
+        <div id="res-score" class="text-3xl font-bold text-green-700 mb-3"></div>
+        <button id="btn-replay" class="bg-green-700 hover:bg-green-800 text-white py-2 px-6 rounded-xl font-bold mr-2">もう一度</button>
+        <button id="btn-home-res" class="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-6 rounded-xl font-bold">ホームへ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Glossary -->
+  <div id="panel-glossary" class="hidden">
+    <div class="bg-white rounded-2xl shadow p-5 mt-1">
+      <h2 class="font-bold text-gray-800 mb-3">花道用語集</h2>
+      <input type="text" id="glossary-search" placeholder="用語を検索..." class="border border-gray-300 rounded-lg px-3 py-2 w-full text-sm mb-3" aria-label="用語検索">
+      <div id="glossary-list" class="space-y-2"></div>
+    </div>
+  </div>
+
+  <!-- Calculator -->
+  <div id="panel-calculator" class="hidden">
+    <div class="bg-white rounded-2xl shadow p-5 mt-1">
+      <h2 class="font-bold text-gray-800 mb-1">役枝長さ計算機</h2>
+      <p class="text-sm text-gray-500 mb-4">花器の高さを入力すると推奨される役枝の長さを計算します。</p>
+      <label class="block text-sm font-semibold text-gray-700 mb-1" for="container-height">花器の高さ（cm）</label>
+      <input type="number" id="container-height" min="5" max="200" value="30" class="border border-gray-300 rounded-lg px-3 py-2 w-full text-sm mb-3" aria-label="花器の高さ">
+      <label class="block text-sm font-semibold text-gray-700 mb-1" for="container-width">花器の口の幅（cm）</label>
+      <input type="number" id="container-width" min="5" max="100" value="20" class="border border-gray-300 rounded-lg px-3 py-2 w-full text-sm mb-3" aria-label="花器の幅">
+      <label class="block text-sm font-semibold text-gray-700 mb-1" for="style-select">スタイル</label>
+      <select id="style-select" class="border border-gray-300 rounded-lg p-2 w-full text-sm mb-4">
+        <option value="moribana">盛り花（水盤）</option>
+        <option value="nageire">投げ入れ（花瓶）</option>
+        <option value="shoka">生花（池坊）</option>
+      </select>
+      <button id="btn-calc" class="bg-green-700 hover:bg-green-800 text-white py-2 px-5 rounded-lg font-bold text-sm w-full mb-4">計算する</button>
+      <div id="calc-result" class="hidden bg-green-50 rounded-xl p-4 space-y-2"></div>
+    </div>
+  </div>
+
+  <!-- Compare -->
+  <div id="panel-compare" class="hidden">
+    <div class="bg-white rounded-2xl shadow p-4 mt-1 overflow-x-auto">
+      <h2 class="font-bold text-gray-800 mb-3">流派比較表</h2>
+      <div id="compare-table"></div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// Data
+const STYLES = [
+  { name:'立花', school:'池坊', vessel:'花瓶・壺', desc:'室町時代に完成した最も格式高いスタイル。7〜9本の役枝で宇宙観を表現する。真（shin）を中心に左右対称的に構成。', key:'rikka' },
+  { name:'生花', school:'池坊', vessel:'花瓶・壺', desc:'江戸時代に発展。三主枝（真・副・体）で構成。自然の姿を格式高く表現。7:5:3の比率が基本。', key:'shoka' },
+  { name:'自由花（池坊）', school:'池坊', vessel:'各種', desc:'伝統に縛られず現代的な感覚で自由に表現するスタイル。池坊での現代的アプローチ。', key:'jiyu-ikenobo' },
+  { name:'草月自由花', school:'草月流', vessel:'各種・非伝統的', desc:'吉田草月が創立した流派。規則よりも個人の表現を重視。型にとらわれない自由な造形美を追求。', key:'sogetsu-jiyu' },
+  { name:'草月基本形', school:'草月流', vessel:'水盤・花瓶', desc:'草月流の基礎となる形。直立型・傾斜型・垂れ下がり型など複数の基本スタイルがある。', key:'sogetsu-basic' },
+  { name:'盛り花', school:'小原流', vessel:'水盤（浅い器）', desc:'小原雲心が考案。水盤（浅い皿状の器）に剣山を使って生ける。広がりのある横長の表現が特徴。', key:'moribana' },
+  { name:'投げ入れ', school:'小原流', vessel:'花瓶・筒', desc:'花瓶や筒形の器に自然に投げ入れるように生けるスタイル。支えの工夫が必要。', key:'nageire' },
+  { name:'瓶花', school:'小原流', vessel:'花瓶', desc:'小原流の花瓶を使ったスタイル。盛り花よりも縦方向の表現を重視。', key:'heika' },
+];
+
+const YAKUEDA = [
+  { name:'真（しん）', role:'主役・最も高い役枝。自然の垂直を表し、花全体の骨格を決める。', length:'容器高+幅の1.5〜2倍', school:'全流派共通' },
+  { name:'副（そえ）', role:'真を引き立てる脇役。真の2/3〜3/4の高さで、斜めに配置。', length:'真の長さの2/3〜3/4', school:'全流派共通' },
+  { name:'体（たい）', role:'前方に張り出す役枝。構成に奥行きと量感を与える。', length:'真の長さの1/2〜2/3', school:'全流派共通' },
+  { name:'流し（ながし）', role:'水平または斜め下に流れる役枝。動きと流れを表現。', length:'副の長さと同等', school:'小原流・草月流' },
+  { name:'控え（ひかえ）', role:'前方低く配置する役枝。重心を安定させ、前方への展開を示す。', length:'真の長さの1/3程度', school:'全流派共通' },
+  { name:'胴（どう）', role:'花の中間部を支える役枝。立花に特有の役割。', length:'副と体の中間', school:'池坊立花' },
+  { name:'見越し', role:'後方上部への飛び出し役枝。空間に奥行きを与える。', length:'真より少し短い', school:'池坊立花' },
+];
+
+const RATIOS = [
+  { style:'盛り花（水盤）', shin:'容器高+幅の1.5倍', soe:'真の2/3', tai:'真の1/3', note:'剣山を器の中央やや左手前に置く' },
+  { style:'投げ入れ（花瓶）', shin:'花瓶の高さ×1.5+口の幅', soe:'真の2/3', tai:'真の1/3', note:'支えの枝（留め木）を使って固定' },
+  { style:'生花（池坊）', shin:'容器高+幅の1.5〜2倍', soe:'真の2/3', tai:'副の2/3', note:'7:5:3の比率が基本。縦の表現を重視' },
+];
+
+const VESSELS = [
+  { vessel:'水盤', style:'盛り花（小原流）', desc:'浅い円盤状・角型の器。剣山と組み合わせる。横方向の広がりを活かす。', school:'小原流' },
+  { vessel:'花瓶', style:'投げ入れ・瓶花', desc:'縦長の筒形の器。首が細く縦の流れを表現しやすい。', school:'全流派' },
+  { vessel:'籠（かご）', style:'夏の投げ入れ・自由花', desc:'竹製の籠に水の入った器を入れて使用。涼感・和の趣を表現。', school:'草月流・小原流' },
+  { vessel:'壺', style:'立花・生花', desc:'池坊の格式高いスタイルに使われる大きな壺形の器。', school:'池坊' },
+  { vessel:'剣山', style:'盛り花専用（道具）', desc:'花を固定するための金属ピン台。水盤と組み合わせて使用。道具であり花器ではない。', school:'小原流' },
+];
+
+const GLOSSARY = [
+  { term:'真（しん）', def:'生け花の主役となる最も重要な枝。最も高く配置し、花全体の方向と骨格を決定する。' },
+  { term:'副（そえ）', def:'真を補佐する役枝。真の2/3〜3/4の長さで斜めに配置し、動きを加える。' },
+  { term:'体（たい）', def:'前方に展開する役枝。真の1/2〜2/3の長さで、作品に奥行きと量感をもたらす。' },
+  { term:'7:5:3の比率', def:'日本の美意識「黄金比」に基づく役枝の長さ比率。真:副:体 = 7:5:3が基本。' },
+  { term:'剣山（けんざん）', def:'鉛の台に金属ピンを植えた花留め道具。盛り花スタイルで使用。水盤に沈めて花を固定。' },
+  { term:'留め木（とめき）', def:'投げ入れスタイルで花を固定するための木の枝。花瓶の口に引っかけて使う。' },
+  { term:'水盤（すいばん）', def:'浅い平らな皿形の花器。盛り花スタイルで使用。水を張り剣山を置く。' },
+  { term:'池坊（いけのぼう）', def:'最古の生け花流派。6世紀に遡る歴史を持ち、京都六角堂の池坊専慶が始めたとされる。' },
+  { term:'草月流（そうげつりゅう）', def:'1927年に吉田草月が創立。自由な表現を重視し、伝統的な形式にとらわれない現代的アプローチ。' },
+  { term:'小原流（おはらりゅう）', def:'明治時代に小原雲心が創立。盛り花スタイルを考案し、洋花の使用を普及させた。' },
+  { term:'立花（りっか）', def:'池坊の最も格式高いスタイル。7〜9本の役枝で宇宙観・自然観を表現。' },
+  { term:'盛り花（もりばな）', def:'水盤と剣山を使う小原流のスタイル。横に広がる動きのある表現が特徴。' },
+  { term:'投げ入れ（なげいれ）', def:'花瓶に自然に投げ込むように生けるスタイル。支えの工夫が技術の見せ所。' },
+  { term:'花道（かどう）', def:'生け花の芸道全般を指す言葉。「道」として精神性・美意識を高める修行の側面を持つ。' },
+  { term:'間（ま）', def:'花と花の間の空間。日本美学では「余白」「負の空間」も作品の重要な要素とされる。' },
+];
+
+let currentMode = '';
+let quizQuestions = [];
+let quizCurrent = 0;
+let quizScore = 0;
+let answered = false;
+let totalCorrect = parseInt(localStorage.getItem('ikebana_correct') || '0');
+
+function saveTotalCorrect() { localStorage.setItem('ikebana_correct', String(totalCorrect)); }
+
+function shuffle(arr) {
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+function switchTab(id) {
+  ['quiz','glossary','calculator','compare'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('active', t===id);
+    document.getElementById('panel-'+t).classList.toggle('hidden', t!==id);
+  });
+  if (id==='compare') renderCompare();
+  if (id==='glossary') renderGlossary('');
+}
+
+function buildQuestions(mode) {
+  if (mode==='style') {
+    return shuffle(STYLES).slice(0,8).map(s => {
+      const others = shuffle(STYLES.filter(x=>x.name!==s.name)).slice(0,3).map(x=>x.name);
+      return { label:'スタイル識別', q:s.desc, options:shuffle([s.name,...others]), correct:s.name, explanation:'「'+s.name+'」（'+s.school+'）: '+s.desc };
+    });
+  }
+  if (mode==='yakueda') {
+    return shuffle(YAKUEDA).slice(0,8).map(y => {
+      const others = shuffle(YAKUEDA.filter(x=>x.name!==y.name)).slice(0,3).map(x=>x.name);
+      return { label:'役枝問題', q:'次の役割を持つ役枝は？\n「'+y.role+'」', options:shuffle([y.name,...others]), correct:y.name, explanation:y.name+': '+y.role+'\n長さの目安: '+y.length };
+    });
+  }
+  if (mode==='ratio') {
+    const qs = [];
+    RATIOS.forEach(r => {
+      const q1 = { label:'比率問題', q:'「'+r.style+'」の「真（しん）」の長さの目安は？', options:shuffle([r.shin,'容器高さ×1倍','容器高さ×3倍','口の幅×2倍']), correct:r.shin, explanation:r.style+' — 真:'+r.shin+' / 副:'+r.soe+' / 体:'+r.tai+'\n'+r.note };
+      qs.push(q1);
+    });
+    return shuffle(qs).slice(0,8);
+  }
+  if (mode==='vessel') {
+    return shuffle(VESSELS).slice(0,5).map(v => {
+      const others = shuffle(VESSELS.filter(x=>x.vessel!==v.vessel)).slice(0,3).map(x=>x.vessel);
+      return { label:'花器問題', q:'「'+v.style+'」に使う花器は？\n（'+v.school+'）', options:shuffle([v.vessel,...others]), correct:v.vessel, explanation:v.vessel+': '+v.desc };
+    });
+  }
+  return [];
+}
+
+function startQuiz(mode) {
+  currentMode = mode;
+  quizQuestions = buildQuestions(mode);
+  quizCurrent = 0;
+  quizScore = 0;
+  answered = false;
+  document.getElementById('quiz-home').classList.add('hidden');
+  document.getElementById('quiz-result').classList.add('hidden');
+  document.getElementById('quiz-active').classList.remove('hidden');
+  renderQ();
+}
+
+function renderQ() {
+  const q = quizQuestions[quizCurrent];
+  const total = quizQuestions.length;
+  document.getElementById('q-num').textContent = quizCurrent+1;
+  document.getElementById('score-display').textContent = quizScore + '点';
+  document.getElementById('q-progress').style.width = (quizCurrent/total*100)+'%';
+  document.getElementById('q-label').textContent = q.label;
+  document.getElementById('q-text').textContent = q.q;
+  const opts = document.getElementById('q-options');
+  opts.innerHTML = '';
+  document.getElementById('q-explanation').classList.add('hidden');
+  answered = false;
+  q.options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn w-full text-left bg-green-50 hover:bg-green-100 border border-green-200 rounded-xl py-2.5 px-4 text-sm font-medium text-gray-800';
+    btn.textContent = opt;
+    btn.addEventListener('click', () => {
+      if (answered) return;
+      answered = true;
+      const correct = opt === q.correct;
+      if (correct) {
+        btn.classList.add('bg-green-200','border-green-600','text-green-900');
+        quizScore++;
+        totalCorrect++;
+        saveTotalCorrect();
+        document.getElementById('total-correct-display').textContent = totalCorrect;
+      } else {
+        btn.classList.add('bg-red-100','border-red-400','text-red-800');
+        opts.querySelectorAll('button').forEach(b => {
+          if (b.textContent===q.correct) b.classList.add('bg-green-200','border-green-600','text-green-900');
+        });
+      }
+      opts.querySelectorAll('button').forEach(b=>{ b.disabled=true; });
+      document.getElementById('score-display').textContent = quizScore + '点';
+      const expResult = document.getElementById('exp-result');
+      expResult.textContent = correct ? '✅ 正解！' : '❌ 不正解';
+      expResult.className = 'font-bold text-sm mb-1 ' + (correct?'text-green-700':'text-red-700');
+      document.getElementById('exp-text').textContent = q.explanation;
+      document.getElementById('q-explanation').classList.remove('hidden');
+    });
+    opts.appendChild(btn);
+  });
+}
+
+function renderGlossary(filter) {
+  const list = document.getElementById('glossary-list');
+  list.innerHTML = '';
+  const terms = filter ? GLOSSARY.filter(g=>g.term.includes(filter)||g.def.includes(filter)) : GLOSSARY;
+  terms.forEach(g => {
+    const div = document.createElement('div');
+    div.className = 'border border-green-100 rounded-xl p-3 bg-white';
+    const term = document.createElement('div');
+    term.className = 'font-bold text-green-900 text-sm mb-1';
+    term.textContent = g.term;
+    const def = document.createElement('div');
+    def.className = 'text-xs text-gray-600 leading-relaxed';
+    def.textContent = g.def;
+    div.appendChild(term);
+    div.appendChild(def);
+    list.appendChild(div);
+  });
+  if (terms.length===0) {
+    const p = document.createElement('p');
+    p.className = 'text-sm text-gray-400';
+    p.textContent = '見つかりませんでした';
+    list.appendChild(p);
+  }
+}
+
+function renderCompare() {
+  const tbl = document.getElementById('compare-table');
+  const data = [
+    { label:'創立', ikenobo:'6世紀（最古）', sogetsu:'1927年', ohara:'明治時代' },
+    { label:'哲学', ikenobo:'伝統・格式・自然の再現', sogetsu:'自由・個性・造形美', ohara:'自然美・洋花の融合' },
+    { label:'代表様式', ikenobo:'立花・生花・自由花', sogetsu:'自由花・基本形', ohara:'盛り花・投げ入れ・瓶花' },
+    { label:'主な花器', ikenobo:'壺・花瓶', sogetsu:'各種（非伝統含む）', ohara:'水盤・花瓶' },
+    { label:'花材制限', ikenobo:'和花中心', sogetsu:'なし（素材自由）', ohara:'洋花・切り花可' },
+    { label:'役枝比率', ikenobo:'厳格（7:5:3）', sogetsu:'柔軟', ohara:'7:5:3基本' },
+  ];
+  const headers = ['項目','池坊','草月流','小原流'];
+  const schoolClasses = ['','school-ikenobo','school-sogetsu','school-ohara'];
+  const table = document.createElement('table');
+  table.className = 'w-full text-sm border-collapse min-w-96';
+  const thead = document.createElement('thead');
+  const hrow = document.createElement('tr');
+  headers.forEach((h,i) => {
+    const th = document.createElement('th');
+    th.className = 'py-2 px-3 text-left bg-green-50 font-semibold text-gray-700 border-b border-green-200';
+    if (i>0) {
+      const badge = document.createElement('span');
+      badge.className = 'school-badge ' + schoolClasses[i];
+      badge.textContent = h;
+      th.appendChild(badge);
+    } else {
+      th.textContent = h;
+    }
+    hrow.appendChild(th);
+  });
+  thead.appendChild(hrow);
+  table.appendChild(thead);
+  const tbody = document.createElement('tbody');
+  data.forEach((row,i) => {
+    const tr = document.createElement('tr');
+    tr.className = i%2===0?'bg-white':'bg-green-50/30';
+    [row.label, row.ikenobo, row.sogetsu, row.ohara].forEach(v => {
+      const td = document.createElement('td');
+      td.className = 'py-2 px-3 border-b border-green-100 text-gray-700';
+      td.textContent = v;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  tbl.innerHTML = '';
+  tbl.appendChild(table);
+}
+
+// Event Listeners
+document.getElementById('tab-quiz').addEventListener('click', ()=>switchTab('quiz'));
+document.getElementById('tab-glossary').addEventListener('click', ()=>switchTab('glossary'));
+document.getElementById('tab-calculator').addEventListener('click', ()=>switchTab('calculator'));
+document.getElementById('tab-compare').addEventListener('click', ()=>switchTab('compare'));
+
+document.querySelectorAll('.quiz-mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => startQuiz(btn.dataset.mode));
+});
+
+document.getElementById('btn-quit-quiz').addEventListener('click', () => {
+  document.getElementById('quiz-active').classList.add('hidden');
+  document.getElementById('quiz-result').classList.add('hidden');
+  document.getElementById('quiz-home').classList.remove('hidden');
+});
+
+document.getElementById('btn-next-q').addEventListener('click', () => {
+  quizCurrent++;
+  if (quizCurrent >= quizQuestions.length) {
+    document.getElementById('quiz-active').classList.add('hidden');
+    const emojis=['😢','🌿','🌸','🌺','🌼'];
+    const idx = Math.min(Math.floor(quizScore/quizQuestions.length*5),4);
+    document.getElementById('res-emoji').textContent = emojis[idx];
+    document.getElementById('res-score').textContent = quizScore + ' / ' + quizQuestions.length;
+    document.getElementById('quiz-result').classList.remove('hidden');
+  } else {
+    renderQ();
+  }
+});
+
+document.getElementById('btn-replay').addEventListener('click', ()=>startQuiz(currentMode));
+document.getElementById('btn-home-res').addEventListener('click', () => {
+  document.getElementById('quiz-result').classList.add('hidden');
+  document.getElementById('quiz-home').classList.remove('hidden');
+});
+
+document.getElementById('btn-reset-ikebana').addEventListener('click', () => {
+  if (confirm('統計をリセットしますか？')) {
+    totalCorrect = 0;
+    saveTotalCorrect();
+    document.getElementById('total-correct-display').textContent = 0;
+  }
+});
+
+document.getElementById('glossary-search').addEventListener('input', e => renderGlossary(e.target.value));
+
+document.getElementById('btn-calc').addEventListener('click', () => {
+  const h = parseFloat(document.getElementById('container-height').value) || 30;
+  const w = parseFloat(document.getElementById('container-width').value) || 20;
+  const style = document.getElementById('style-select').value;
+  let shinLen, soeLen, taiLen, note;
+  if (style==='moribana' || style==='nageire') {
+    shinLen = Math.round((h+w)*1.5);
+    soeLen = Math.round(shinLen*2/3);
+    taiLen = Math.round(shinLen*1/3);
+    note = style==='moribana'?'剣山を水盤の中央やや左手前に配置。':'留め木で花瓶の口径に合わせて固定。';
+  } else {
+    shinLen = Math.round((h+w)*1.75);
+    soeLen = Math.round(shinLen*2/3);
+    taiLen = Math.round(soeLen*2/3);
+    note = '7:5:3の比率を厳守。縦の流れを意識。';
+  }
+  const result = document.getElementById('calc-result');
+  result.innerHTML = '';
+  result.classList.remove('hidden');
+  const rows = [
+    { label:'真（しん）', len:shinLen, ratio:'基準' },
+    { label:'副（そえ）', len:soeLen, ratio:'真の'+(Math.round(soeLen/shinLen*10)/10)+'倍' },
+    { label:'体（たい）', len:taiLen, ratio:'真の'+(Math.round(taiLen/shinLen*10)/10)+'倍' },
+  ];
+  rows.forEach(r => {
+    const div = document.createElement('div');
+    div.className = 'flex justify-between items-center bg-white rounded-lg px-3 py-2';
+    const left = document.createElement('span');
+    left.className = 'font-semibold text-gray-800 text-sm';
+    left.textContent = r.label;
+    const right = document.createElement('span');
+    right.className = 'font-bold text-green-700';
+    right.textContent = r.len + 'cm（' + r.ratio + '）';
+    div.appendChild(left);
+    div.appendChild(right);
+    result.appendChild(div);
+  });
+  const noteDiv = document.createElement('div');
+  noteDiv.className = 'text-xs text-gray-500 mt-1';
+  noteDiv.textContent = note;
+  result.appendChild(noteDiv);
+});
+
+// Init
+document.getElementById('total-correct-display').textContent = totalCorrect;
+</script>
+</body>
+</html>
